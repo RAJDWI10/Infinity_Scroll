@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raj's Infinity Scroll</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+        html {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          font-family: 'Poppins', sans-serif;
+          background: linear-gradient(135deg, #ece9e6, #ffffff);
+          color: #333;
+        }
+
+        header {
+          text-align: center;
+          padding: 25px 10px;
+          background: linear-gradient(to right, #6a11cb, #2575fc);
+          color: white;
+          box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+          font-size: 2.5rem;
+          margin: 0;
+        }
+
+        .tagline {
+          font-size: 1rem;
+          margin-top: 5px;
+          opacity: 0.8;
+        }
+
+        /* Loader (small, no overlay) */
+        .loader {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: none;
+          z-index: 999;
+        }
+
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #ddd;
+          border-top: 4px solid #6a11cb;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Image container */
+        .image-container {
+          margin: 30px auto;
+          max-width: 1100px;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 20px;
+          padding: 0 20px;
+        }
+
+        .image-container img {
+          width: 100%;
+          height: auto;
+          border-radius: 15px;
+          box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+          transition: transform 0.4s ease, box-shadow 0.4s ease;
+          opacity: 0;
+          animation: fadeIn 1s forwards;
+        }
+
+        .image-container img:hover {
+          transform: scale(1.05);
+          box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        /* Media Query: Mobile */
+        @media screen and (max-width: 600px) {
+          header h1 {
+            font-size: 1.8rem;
+          }
+          .tagline {
+            font-size: 0.9rem;
+          }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>Raj's Infinity Scroll</h1>
+        <p class="tagline">Endless inspiration, one scroll away</p>
+    </header>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Image Container -->
+    <div class="image-container" id="image-container"></div>
+
+    <script>
+        const imageContainer = document.getElementById('image-container');
+        const loader = document.getElementById('loader');
+
+        let ready = false;
+        let imagesLoaded = 0;
+        let totalImages = 0;
+        let photosArray = [];
+
+        // Unsplash API
+        const count = 30;
+        const apiKey = 'SHfJeeHRj4SdbpP9rk5BZ5IeevQXVUfvVB_lcSUnifM';
+        const apiUrl = `https://api.unsplash.com/photos/random/?client_id=${apiKey}&count=${count}`;
+
+        // Check if all images are loaded
+        function imageLoaded() {
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+                ready = true;
+                loader.hidden = true;
+            }
+        }
+
+        // Helper function to set attributes
+        function setAttributes(element, attributes) {
+            for (const key in attributes) {
+                element.setAttribute(key, attributes[key]);
+            }
+        }
+
+        // Create elements for links & photos
+        function displayPhotos() {
+            imagesLoaded = 0;
+            totalImages = photosArray.length;
+
+            photosArray.forEach((photo) => {
+                const item = document.createElement('a');
+                setAttributes(item, {
+                    href: photo.links.html,
+                    target: '_blank'
+                });
+
+                const img = document.createElement('img');
+                setAttributes(img, {
+                    src: photo.urls.regular,
+                    alt: photo.alt_description,
+                    title: photo.alt_description
+                });
+
+                img.addEventListener('load', imageLoaded);
+
+                item.appendChild(img);
+                imageContainer.appendChild(item);
+            });
+        }
+
+        // Get photos from Unsplash API
+        async function getPhotos() {
+            try {
+                const response = await fetch(apiUrl);
+                photosArray = await response.json();
+                displayPhotos();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Infinite scroll
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000 && ready) {
+                ready = false;
+                getPhotos();
+            }
+        });
+
+        // On load
+        getPhotos();
+    </script>
+</body>
+</html>
